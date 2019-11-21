@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 
 import { View, Text, StyleSheet, Button , Alert} from 'react-native';
 
@@ -18,9 +18,18 @@ const generateRandomBetween = (min, max, exclude) => {
 
 const GameScreen = props => {
     const [currentGuess, setCurrentGuess] = useState(generateRandomBetween(1, 1000, props.userChoice));
-    // These variables are stored detatched from the current rendering, that way these numbers aren't re-created each time the state is refreshed
+    // These variables are stored detatched from the current rendering, that way these numbers aren't re-created each time the component is re-rendered
     const currentLow = useRef(1);
     const currentHigh = useRef(1000);
+    const [rounds,setRounds] = useState(0);
+    // destructure the user choice and on game over so it can be used in the us effect, it will re-render if those two change
+    const {userChoice, onGameOver} = props;
+    // This runs after every re-rendering of the component
+    useEffect(() => {
+        if (currentGuess === userChoice){
+            onGameOver(rounds);
+        }
+    }, [currentGuess,userChoice,onGameOver]);
     const nextGuessHandler = direction => {
         if ((direction === 'lower' && currentGuess < props.userChoice) || (direction === 'greater' && currentGuess > props.userChoice)){
             Alert.alert("Liar!",'You know that this is incorrect...',[{text:"Sorry!", style:"cancel"}]);
@@ -28,7 +37,13 @@ const GameScreen = props => {
         }
         if (direction === 'lower'){
             currentHigh.current = currentGuess;
+        }else{
+            currentLow.current = currentGuess;
         }
+
+        const nextNumber = generateRandomBetween(currentLow.current, currentHigh.current, currentGuess);
+        setCurrentGuess(nextNumber);
+        setRounds(curRounds => curRounds + 1)
         
     };
     return (
